@@ -1,0 +1,76 @@
+type tree = Knot of int * int * ((string * tree) list);;
+
+let separete str1 str2=
+    let rec sup_f s0 s1 s2 i n=
+        match n with
+            0 -> if i = String.length(str1) || i = String.length(str2) || (str1.[i] != str2.[i]) 
+                     then (sup_f s0 s1 s2 i 1)
+                     else (sup_f (s0^(String.make 1 str1.[i])) s1 s2 (i+1) n)
+           |1 -> if i = String.length(str1) 
+                     then (sup_f s0 s1 s2 (i - (String.length(s1))) 2)
+                     else (sup_f s0 (s1^(String.make 1 str1.[i])) s2 (i+1) n)
+           |2 -> if i = String.length(str2) 
+                     then (s0,s1,s2)
+                     else (sup_f s0 s1 (s2^(String.make 1 str2.[i])) (i+1) n) in
+    sup_f "" "" "" 0 0;;
+ 
+let rec add s tree =
+    if s = "" then 
+                  (match tree with
+                    Knot (i,j,l) -> Knot (i+1,j+1,l))
+              else (match tree with
+                    Knot (i,j,l) -> Knot (i,j+1,search l s))
+and search l s =
+    match l with
+        (s1,Knot (i,j,li)) :: b-> if s1.[0] = s.[0] 
+                                        then (let (st0,st1,st2) = separete s1 s in
+                                              if st1 = "" then ((st0,(add st2 (Knot(i,j,li))))::b)
+                                                          else ((st0,(add st2 (Knot(0,j,[(st1,Knot(i,j,li))]))))::b))
+                                        else 
+                                             (match b with
+                                              (s2,Knot (i1,j1,l2))::c -> if j < j1 then 
+                                                                                        (search ((s2,Knot (i1,j1,l2))::(s1,Knot (i,j,li))::c) s)
+                                                                                    else 
+                                                                                        ((s1,Knot (i,j,li))::(search ((s2,Knot (i1,j1,l2))::c) s))
+                                             | _->((s1,Knot (i,j,li))::(search [] s)))
+       |[]->[(s,Knot (1,1,[]))];;
+       (*
+let rec print_tree tree=
+    match tree with
+        Knot (i,j,l)-> print_string("(");print_int(i);print_string"[";List.iter (fun (s,x) -> print_string"("; print_string s;print_string",";print_tree (x);print_string");") l;print_string"]";;
+
+let tree = (add "abc" (add "aa" (add "ab" (Knot (0,0,[])))));;
+
+print_tree (tree);;*)
+
+let rec find_max l=
+    match l with
+        (a,i)::(b,j)::c-> if i < j then (find_max ((b,j)::c)) else (find_max ((a,i)::c))
+       |(a,i)::[]->(a,i)
+       |[]-> failwith"";;
+
+let rec most_popilar tree =
+     match tree with
+         Knot(i,j,li) -> let l = (List.map (fun (s,t) -> let (s1,i1) = most_popilar t in (s^s1,i1)) li) in
+                         if l = [] then ("",i) else 
+                                                   (let (a,n) = find_max (l) in
+                                                    if n > i then (a,n)
+                                                             else ("",i));; 
+
+let list_string_to_tree lis= 
+    let rec sup_f tree li =
+        match li with
+           s::b->sup_f  (add s tree) b
+          |[]->tree in
+    (sup_f (Knot(0,0,[])) lis);;
+
+
+let l = ["ab"; "ab"; "a"; "a"; "ab"; "ac"; "abc"];;
+
+let (a,i) = most_popilar (list_string_to_tree l);;
+print_int (i);;
+print_string" ";;
+print_string(a);;
+     
+
+                        
