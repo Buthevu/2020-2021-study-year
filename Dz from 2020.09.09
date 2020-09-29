@@ -1,0 +1,109 @@
+let t = Hashtbl.create 2000;;
+let y = Hashtbl.create 2000;;
+let u = Hashtbl.create 2000;;
+
+type answer = Yes of string| No;;
+
+let f = open_in "abc.txt";; 
+
+let read_row() = 
+try 
+    let s = input_line f in 
+    Yes s
+with 
+   _ -> No;;
+
+let canon s = 
+let rec sup_f i = if i = String.length s then "" 
+                                         else (let c = s.[i] in
+                                               if ((('A' <= c)&&(c <= 'Z'))||(('А' <= c)&&(c <= 'Я'))) then ((String.make 1 (char_of_int ((int_of_char (c)) + 32)))^(sup_f (i+1))) 
+                                                                                                       else (if (c = 'Ё') then ("ё"^(sup_f (i+1)))
+                                                                                                                          else ((String.make 1 c)^(sup_f (i+1)))
+                                                                                                            )
+                                              ) in
+sup_f 0;;
+
+
+
+let rec process s1 p1 = (let can = canon s1 in
+                        if (Hashtbl.mem t can) then (let (n1,n2,n3) = Hashtbl.find t can in
+                                             if s1 = can then (Hashtbl.replace t can (n1+1,n2,n3))
+                                                         else (if p1 then (Hashtbl.replace t can (n1,n2+1,n3)) else (Hashtbl.replace t can (n1,n2,n3+1)))
+                                            )
+                                       else (if s1 = can then (Hashtbl.add t can (1,0,0))
+                                                         else (if p1 then (Hashtbl.add t can (0,1,0)) else (Hashtbl.add t can (0,0,1))) 
+                                            )
+                       )
+
+let rec sup_f s i p1 s1= 
+    if i = String.length s then (match (read_row()) with
+                                     Yes str -> if s1 = "" then (sup_f str 0 p1 "") else (process s1 p1; sup_f str 0 p1 "")
+                                    |No -> if s1 = "" then () 
+                                                      else (process s1 p1)
+                                )
+                           else (if (s.[i] = '.')||(s.[i] = '!')||(s.[i] = '?') then (if s1 = "" then (sup_f s (i+1) true "") else (process s1 p1; sup_f s (i+1) true ""))               
+                                                                                else (if ((s.[i]) < '0')||(s.[i] = '«')||(s.[i] = '»') then (if s1 = "" then (sup_f s (i+1) p1 "") else (process s1 p1;sup_f s (i+1) false ""))
+                                                                                                                                       else (sup_f s (i+1) p1 (s1^(String.make 1 (s.[i]))))
+                                                                                     )
+                                );;              
+
+
+sup_f "" 0 true "";;
+
+close_in f;;
+
+let f = open_in "abc.txt";; 
+
+let read_row() = 
+try 
+    let s = input_line f in 
+    Yes s
+with 
+   _ -> No;;
+let rec process2 l = 
+    match l with
+       |s::b->if (((s.[0] > '@')&&(s.[0] < '['))||((s.[0] < '{') && (s.[0] > '`'))) then (if (Hashtbl.mem u (List.length l)) then (Hashtbl.replace u (List.length l) (Hashtbl.find u (List.length l))) 
+                                                                                         else (Hashtbl.add u (List.length l) 1))  
+                                                else (if (Hashtbl.mem y (List.length l)) then (Hashtbl.replace y (List.length l) (Hashtbl.find y (List.length l))) 
+                                                                                         else (Hashtbl.add y (List.length l) 1))
+       |[]->();;
+
+
+let rec sup_f2 s i s1 l= 
+    if i = String.length s then (match (read_row()) with
+                                     Yes str -> if s1 = "" then (sup_f2 str 0 "" l) else (sup_f2 str 0 "" (s1::l))
+                                    |No -> if s1 = "" then (process2 l) 
+                                                      else (process2 (s1 :: l))
+                                )
+                           else (if (s.[i] = '.')||(s.[i] = '!')||(s.[i] = '?') then (if s1 = "" then (process2 l;sup_f2 s (i+1) "" []) else (process2 (s1::l); sup_f2 s (i+1) "" []))               
+                                                                                else (if ((s.[i]) < '0')||(s.[i] = '«')||(s.[i] = '»') then (if s1 = "" then (sup_f2 s (i+1) "" l) else (sup_f2 s (i+1) "" (s1::l)))
+                                                                                                                                       else (sup_f2 s (i+1) (s1^(String.make 1 (s.[i]))) l)
+                                                                                     )
+                                );;              
+
+sup_f2 "" 0 "" [];;       
+close_in f;;
+
+print_string"Слово - число появлений не в начале пердложения с маленькой буквы :: число появлений в начале предложения :: число появления не в начале предложения с большой буквы\n\n";;
+
+Hashtbl.iter (fun s (n1,n2,n3) -> print_string(s^" - ");print_int n1;print_string" :: ";print_int n2;print_string" :: ";print_int n3;print_string"\n") t;;
+
+let number_of_words () = let (k1,k2,k3) = (Hashtbl.fold (fun s (m1,m2,m3) (n1,n2,n3) -> (m1 + n1, m2 + n2, m3 + n3)) t (0,0,0)) in (k1 + k2 + k3);;
+
+let number_of_proper_nouns () = let (k1,k2,k3) = (Hashtbl.fold (fun s (m1,m2,m3) (n1,n2,n3) -> (m1 + n1, m2 + n2, m3 + n3)) t (0,0,0)) in (k3);;  
+
+let probability_that_random_word_is_proper_noun () = let n = (float_of_int (number_of_proper_nouns ())) /. (float_of_int (number_of_words())) in n;;
+
+
+print_string"Количество слов:\n";;
+print_int (number_of_words());;           
+print_string"\nВероятность того, что случайное слово является именем собственным:\n";;
+print_float(probability_that_random_word_is_proper_noun());;
+
+let millde_length_y () = ((float_of_int (Hashtbl.fold (fun l n m -> (l*n + m)) y 0)) /. (float_of_int (Hashtbl.fold (fun l n m -> (n + m)) y 0)));;
+let millde_length_u () = ((float_of_int (Hashtbl.fold (fun l n m -> (l*n + m)) u 0)) /. (float_of_int (Hashtbl.fold (fun l n m -> (n + m)) u 0)));;
+
+print_string"\n\nСредняя длинна русских предложений:\n";;
+print_float (millde_length_y ());;           
+print_string"\nСредняя длинна французских предложений:\n";;
+print_float (millde_length_u ());;
