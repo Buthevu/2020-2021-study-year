@@ -1,0 +1,98 @@
+let check_simple_number p=
+let rec sup_f i = if i >= p then true
+                            else (if (p mod i) = 0 then false else (sup_f (i+1))) in
+if p = 1 then false else (sup_f 2);;
+
+let probability_that_number_in_cut_is_simple m n=
+let rec sup_f i = if i = n + 1 then 0 else (if (check_simple_number i) then (1 + (sup_f (i+1))) else (sup_f (i+1))) in
+((float_of_int (sup_f m)) /. (float_of_int ((n - m) + 1)));;
+
+
+type answer = Yes of string| No;;
+
+let count_words_at_file file=
+let t = Hashtbl.create (100) in
+let f = open_in file in
+let rec read_row() =
+try 
+    (let s = input_line f in
+     Yes s)
+with
+    _-> No in
+
+let canon s = 
+let rec sup_f i = if i = String.length s then "" 
+                                         else (let c = s.[i] in
+                                               if ((('A' <= c)&&(c <= 'Z'))||(('À' <= c)&&(c <= 'ß'))) then ((String.make 1 (char_of_int ((int_of_char (c)) + 32)))^(sup_f (i+1))) 
+                                                                                                       else (if (c = '¨') then ("¸"^(sup_f (i+1)))
+                                                                                                                          else ((String.make 1 c)^(sup_f (i+1)))
+                                                                                                            )
+                                              ) in
+sup_f 0 in
+
+
+let rec process s1= if s1 = "" then () 
+                               else(let can = String.length (canon s1) in 
+                                    if (Hashtbl.mem t can) then (let n = Hashtbl.find t can in
+                                                                 Hashtbl.replace t can (n+1))
+                                                           else (Hashtbl.add t can 1)) in
+
+
+let rec sup_f s i s1= 
+    if i = String.length s then (match (read_row()) with
+                                     Yes str -> process s1; sup_f str 0 ""
+                                    |No -> process s1
+                                )
+                           else ((if ((s.[i]) < 'A')||(s.[i] = '«')||(s.[i] = '»') then (process s1;sup_f s (i+1) "")
+                                                                                   else (sup_f s (i+1) (s1^(String.make 1 (s.[i]))))
+                                                                                     )
+                                ) in              
+ 
+
+sup_f "" 0 "";
+
+(Hashtbl.fold (fun s n1 l ->(s, n1) :: l) t []);;
+
+let list_of_files = List.filter (fun x -> (String.sub x ((String.length x) - 4) 4) = ".txt") (Array.to_list (Sys.readdir "C:/Users/User/Downloads/reg/study_year_2020-2021/first_semester/2020.09.26"));;
+
+let mathexpectation_of_length_of_file_in_directory () =
+let new_list = List.concat (List.map (fun f -> (count_words_at_file f)) list_of_files) in
+let rec sup_f l = 
+match l with 
+(s,n)::b->(s*n + (sup_f b))
+|[]-> 0 in
+((float_of_int (sup_f new_list)) /. (float_of_int (List.length list_of_files)));;
+
+
+let mathexpectation_of_length_of_word_in_file file =
+let new_list = count_words_at_file file in
+let rec sup_f l = 
+match l with 
+(s,n)::b->(s*n + (sup_f b))
+|[]-> 0 in
+let rec sup_f2 l = 
+match l with 
+(s,n)::b->(n + (sup_f2 b))
+|[]-> 0 in
+
+((float_of_int (sup_f new_list))/.(float_of_int (sup_f2 new_list)));;
+
+print_string"Please, give m, n for program \'probability_that_number_in_cut_is_simple\':\nm = ";;
+let m = read_int ();;
+print_string"n = ";;
+let n = read_int ();;
+print_string("Probability that number in cut ["^(string_of_int m)^","^(string_of_int n)^"] is simple is ");;
+print_float (probability_that_number_in_cut_is_simple m n);;
+
+print_string"\n\nPlease, give me a name of a file:";;
+let file = read_line();;
+print_string("Mathexpectation of length of word in file "^file^" is ");;
+print_float (mathexpectation_of_length_of_word_in_file file);;
+
+print_string"\n\nMathexpectation of length of file in directory is ";;
+print_float(mathexpectation_of_length_of_file_in_directory ());;
+
+
+
+
+
