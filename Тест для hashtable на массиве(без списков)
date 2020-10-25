@@ -1,0 +1,36 @@
+let help str = 
+let rec sup_f i = if i = -1 then 0 else ((sup_f (i-1))*256 + int_of_char (str.[i])) in
+sup_f ((String.length str) - 1);; 
+
+(*val create: ('a->int) -> int -> ('a,'b) t*)
+let t = B.create help 3;;
+
+(*val add: ('a,'b) t -> 'a -> 'b option*)
+let _ = B.add t "start" 0;;
+let _ = B.add t "first" 1;;
+let _ = B.add t "second" 2;;
+let _ = B.add t "third" 3;;
+
+
+(*val mem: ('a,'b) t -> 'a -> bool*)
+if (B.mem t "s") then print_string"there is \"s\"" else print_string"there is no \"s\"";;
+
+(*val find: ('a,'b) t -> 'a -> 'b option*)
+print_string"\n";;
+print_int (match (B.find t "start") with Some n-> n| None -> failwith"there is nothing in \"start\"");;
+
+(*val delete: ('a,'b) t -> 'a -> 'b option*)
+print_string"\n";;
+
+let _ = B.delete t "start";;
+if (B.mem t "start") then print_string"there is \"start\"" else print_string"there is no \"start\"";;
+
+(*val iter: ('a,'b) t -> (('a*'b) -> unit) -> unit*)
+print_string"\n";;
+print_string"\n";;
+B.iter t (fun (s,n) -> print_string"\n";print_string s;print_string" ";print_int n);;
+
+(*val fold: ('a,'b) t -> (('a*'b) -> 'c -> 'c) -> 'c -> 'c*)
+print_string"\n";;
+print_int (B.fold t (fun (s,x) y -> (x+y)) 0);;
+
