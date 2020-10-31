@@ -1,0 +1,105 @@
+let help str = 
+let rec sup_f i = if (i = -1) then 0 else (((sup_f (i-1)) mod 199999)*256 + int_of_char (str.[i])) in
+sup_f ((String.length str) - 1);; 
+
+let t = A.create help 4000;;
+let y = B.create help 4000;;
+
+type answer = Yes of string | No;;
+
+let f = open_in "abc.txt";; 
+
+let read_row() = 
+try 
+    let s = input_line f in 
+    Yes s
+with 
+   _ -> No;;
+
+let canon s = 
+let rec sup_f i = if i = String.length s then "" 
+                                         else (let c = s.[i] in
+                                               if ((('A' <= c)&&(c <= 'Z'))||(('А' <= c)&&(c <= 'Я'))) then ((String.make 1 (char_of_int ((int_of_char (c)) + 32)))^(sup_f (i+1))) 
+                                                                                                       else (if (c = 'Ё') then ("ё"^(sup_f (i+1)))
+                                                                                                                          else ((String.make 1 c)^(sup_f (i+1)))
+                                                                                                            )
+                                              ) in
+sup_f 0;;
+
+
+
+let rec process s1 p1 = (let can = canon s1 in
+                        if (A.mem t can) then (match (A.find t can) with
+                                                   Some n -> (A.replace t can (n+1))
+                                                  |None->failwith"")
+                                         else (let _ = A.add t can 1 in ()));;
+
+let rec sup_f s i p1 s1= 
+    if i = String.length s then (match (read_row()) with
+                                     Yes str -> if s1 = "" then (sup_f str 0 p1 "") else (process s1 p1; sup_f str 0 p1 "")
+                                    |No -> if s1 = "" then () 
+                                                      else (process s1 p1)
+                                )
+                           else (if (s.[i] = '.')||(s.[i] = '!')||(s.[i] = '?') then (if s1 = "" then (sup_f s (i+1) true "") else (process s1 p1; sup_f s (i+1) true ""))               
+                                                                                else (if ((s.[i]) < '0')||(s.[i] = '«')||(s.[i] = '»') then (if s1 = "" then (sup_f s (i+1) p1 "") else (process s1 p1;sup_f s (i+1) false ""))
+                                                                                                                                       else (sup_f s (i+1) p1 (s1^(String.make 1 (s.[i]))))
+                                                                                     )
+                                );;              
+
+let t1 = Sys.time();;
+sup_f "" 0 true "";;
+let _ = ((fun (x,y) -> x) (A.fold t (fun (str1,n1) (str2,n2) -> if n1 > n2 then (str1,n1) else (str2,n2)) ("",0)));;
+print_string"\nTime for open hashtable is ";;
+(*On my computer it is 1.739*)
+print_float(Sys.time() -. t1);; 
+close_in f;;
+let f = open_in "abc.txt";;
+
+let read_row() = 
+try 
+    let s = input_line f in 
+    Yes s
+with 
+   _ -> No;;
+
+
+let rec process2 s1 p1 =(let can = canon s1 in
+                        if (B.mem y can) then (match (B.find y can) with
+                                                   Some n -> (B.replace y can (n+1))
+                                                  |None->failwith"")
+                                         else (let _ = B.add y can 1 in ()));;
+
+let rec sup_f2 s i p1 s1= 
+    if i = String.length s then (match (read_row()) with
+                                     Yes str -> if s1 = "" then (sup_f2 str 0 p1 "") else (process2 s1 p1; sup_f2 str 0 p1 "")
+                                    |No -> if s1 = "" then () 
+                                                      else (process2 s1 p1)
+                                )
+                           else (if (s.[i] = '.')||(s.[i] = '!')||(s.[i] = '?') then (if s1 = "" then (sup_f2 s (i+1) true "") else (process2 s1 p1; sup_f2 s (i+1) true ""))               
+                                                                                else (if ((s.[i]) < '0')||(s.[i] = '«')||(s.[i] = '»') then (if s1 = "" then (sup_f2 s (i+1) p1 "") else (process2 s1 p1;sup_f2 s (i+1) false ""))
+                                                                                                                                       else (sup_f2 s (i+1) p1 (s1^(String.make 1 (s.[i]))))
+                                                                                     )
+                                );;              
+
+
+
+
+
+(* 
+
+let read_row() = 
+try 
+    let s = input_line f in 
+    Yes s
+with 
+   _ -> No;; *)
+let t2 = Sys.time();;
+sup_f2 "" 0 true "";;
+let _ = ((fun (x,y) -> x) (B.fold y (fun (str1,n1) (str2,n2) -> if n1 > n2 then (str1,n1) else (str2,n2)) ("",0)));;
+print_string"\nTime for close hashtable is ";;
+(*on my computer it is 1.249*)
+print_float(Sys.time() -. t2);; 
+close_in f;;
+
+
+
