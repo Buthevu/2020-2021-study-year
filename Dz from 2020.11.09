@@ -1,0 +1,27 @@
+type 'a tree = Node of 'a tree * 'a tree * 'a| Leaf;;
+
+let parse_string s=
+let rec sup_f i =
+if i = String.length s then (i,Leaf)
+                       else (if s.[i] = ')' then (i,Leaf) 
+                                            else (let (p1,t1) = sup_f (i+1) in 
+                                                  let (p2,t2) = sup_f (p1+1) in (p2,Node (t1,t2,None))))in
+let (_,t) = sup_f 0 in t;;
+
+let rec print_bracket_tree_in_line tri =
+match tri with
+Node (tr1,tr2,_) -> print_string "(";print_bracket_tree_in_line tr1;print_string")";print_bracket_tree_in_line tr2
+|Leaf -> print_string"";;
+
+let print_bracket_tree_full tri =
+let rec sup_f tr s =
+match tr with
+Node (tr1,tr2,_)-> print_string ("*\n");print_string(s^"\\-->");sup_f tr1 (s^"|   ");print_string(s^"\\-->");sup_f tr2 (s^"    ")
+|Leaf -> print_string"\n" in
+sup_f tri "";;
+
+let tri = parse_string "(()())()";;
+print_string"parse_string \"(()())()\" is tree looking like thus:\n";;
+print_bracket_tree_full tri;;
+print_string"If i want to print this tree i will get this: ";;
+print_bracket_tree_in_line tri;;
