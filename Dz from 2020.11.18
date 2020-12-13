@@ -1,0 +1,66 @@
+type 'a tree = Leaf | Node of ('a tree) * ('a tree) * 'a;;
+
+let rec mem tri x=
+match tri with
+Node (tr1,tr2,n) -> if x < n then (mem tr1 x) else (if x = n then true else (mem tr2 x))
+|Leaf -> false;; 
+
+print_string"is there 3 in tree N (L,N (L,L,3),1)? (N = Node, L = Leaf )\n";;
+
+if (mem (Node (Leaf,Node (Leaf,Leaf,3),1)) 3) then (print_string"YES \n\n") else (print_string"NO \n\n");;
+
+let rec string_of_tree tri =
+match tri with
+Leaf -> "L"
+|Node (tr1,tr2,a) -> ("N ("^(string_of_tree tr1)^","^(string_of_tree tr2)^","^(string_of_int a)^")");;
+
+let rec add tri x=
+match tri with
+Node (tr1,tr2,n) -> if x < n then (Node (add tr1 x,tr2, n)) else (if x = n then tri else (Node (tr1,add tr2 x, n)))
+| Leaf->(Node (Leaf, Leaf, x));;
+
+print_string"add (N (L,N (L,L,3),1)) 2 is (print this tree with string_of_tree)\n";;
+print_string(string_of_tree (add (Node (Leaf,Node (Leaf,Leaf,3),1)) 2));;
+print_string"\n\n";;
+
+let rec size tri=
+match tri with
+Node (tr1,tr2,x) -> (1 + (size tr1) + (size tr2))
+|Leaf -> 0;;
+
+let rec delete tri x=  
+let rec find_min tr=
+match tr with
+Leaf->failwith""
+|Node (Node(tr11,tr12,m),tr2,n) -> find_min (Node(tr11,tr12,m))
+|Node (Leaf,tr2,n) -> n in                                                
+match tri with
+Node (tr1,tr2,n) -> if x = n then (if tr2 = Leaf then tr1 else (let y = (find_min tr2) in (Node (tr1,(delete tr2 y), y)))) 
+else (if x < n then (Node (delete tr1 x, tr2, n)) else (Node (tr1, delete tr2 x, n))) 
+|Leaf -> failwith"";;
+
+print_string"delete (N (N (L,L,0),N (N (L,L,2),(N (L,L,4)),3),1)) 3 is \n";;
+print_string(string_of_tree (delete (Node (Node (Leaf,Leaf,0),Node (Node (Leaf,Leaf,2),(Node (Leaf,Leaf,4)),3),1)) 3));;
+print_string"\n\n";;
+
+let rec size tri=
+match tri with
+Node (tr1,tr2,x) -> (1 + (size tr1) + (size tr2))
+|Leaf -> 0;;
+
+let rec verity tri =
+match tri with
+Leaf -> (0,0)
+|Node (tr1,tr2,a) -> let (min1,max1) = verity tr1 in 
+                     let (min2,max2) = verity tr2 in ((if min1 < min2 then min1 else min2) + 1,(if max1 > max2 then max1 else max2) + 1);;
+
+
+(let (m1,m2) = verity (Node (Leaf,Node (Node (Leaf,Leaf,2),(Node (Leaf,Leaf,4)),3),1)) in
+print_string"verity (N (L,N (N (L,L,2),(N (L,L,4)),3),1)) is \n";
+print_string("min depth is "^(string_of_int m1)^"  \nmax depth is "^(string_of_int m2)^"");
+print_string"\n");;
+
+
+
+
+
