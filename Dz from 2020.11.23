@@ -1,0 +1,94 @@
+type 'a tree = Leaf | Node of ('a tree) * ('a tree) * 'a;;
+
+let rec mem tri x=
+match tri with
+Node (tr1,tr2,(n,_)) -> if x < n then (mem tr1 x) else (if x = n then true else (mem tr2 x))
+|Leaf -> false;; 
+
+print_string"is there 3 in tree N (L,N (L,L,(3,\"a\")),(1,\"b\"))? (N = Node, L = Leaf )\n";;
+
+if (mem (Node (Leaf,Node (Leaf,Leaf,(3,"a")),(1,"b"))) 3) then (print_string"YES \n\n") else (print_string"NO \n\n");;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let rec add tri x v=
+match tri with
+Node (tr1,tr2,(n,v1)) -> if x < n then (Node (add tr1 x v,tr2, (n,v1))) else (if x = n then (Node (tr1,tr2,(x,v))) else (Node (tr1,add tr2 x v, (n,v1))))
+| Leaf->(Node (Leaf, Leaf, (x,v)));;
+
+let print_bracket_tree_full tri =
+let rec sup_f tr s =
+match tr with
+Node (tr1,tr2,(n,v))-> print_string ("*("^(string_of_int n)^","^v^")\n");print_string(s^"\\-->");sup_f tr1 (s^"|   ");print_string(s^"\\-->");sup_f tr2 (s^"    ")
+|Leaf -> print_string"\n" in
+sup_f tri "";;
+
+print_string"add  N (L,N (L,L,(3,\"a\")),(1,\"b\")) 2 \"c\"\n";;
+print_bracket_tree_full (add (Node (Leaf,Node (Leaf,Leaf,(3,"a")),(1,"b"))) 2 "c");;
+print_string"\n\n";;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let rec delete tri x=  
+let rec find_min tr=
+match tr with
+Leaf->failwith""
+|Node (Node(tr11,tr12,m),tr2,_) -> find_min (Node(tr11,tr12,m))
+|Node (Leaf,tr2,(n,v)) -> (n,v) in                                                
+match tri with
+Node (tr1,tr2,(n,v)) -> if x = n then (if tr2 = Leaf then tr1 else (let (y,vy) = (find_min tr2) in (Node (tr1,(delete tr2 y), (y,vy))))) 
+else (if x < n then (Node (delete tr1 x, tr2, (n,v))) else (Node (tr1, delete tr2 x, (n,v)))) 
+|Leaf -> failwith"";;
+
+print_string "delete N (L,N (N (L,L,(2,\"c\")),L,(3,\"a\")),(1,\"b\")) 3 \n";;
+print_bracket_tree_full (delete (Node (Leaf,Node (Node (Leaf,Leaf,(2,"c")),Leaf,(3,"a")),(1,"b"))) 3);;
+print_string "\n\n";;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let rec find tri x=
+match tri with
+Node (tr1,tr2,(n,v)) -> if n = x then v else (if (x < n) then (find tr1 x) else (find tr2 x))
+|Leaf -> failwith"";;
+
+print_string "find N (L,N (N (L,L,(2,\"c\")),L,(3,\"a\")),(1,\"b\")) 2 \n";;
+print_string (find (Node (Leaf,Node (Node (Leaf,Leaf,(2,"c")),Leaf,(3,"a")),(1,"b"))) 2);;
+print_string "\n\n";;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let sliv tr1 tr2 =
+let rec find_min tr=
+match tr with
+Leaf->failwith""
+|Node (Node(tr11,tr12,m),tr2,_) -> find_min (Node(tr11,tr12,m))
+|Node (Leaf,tr2,(n,v)) -> (n,v) in                                                
+if tr2 = Leaf then tr1 else (let (x,y) = (find_min tr2) in Node (tr1,(delete tr2 x),(x,y)));;
+
+print_string "sliv (N (L,L,(-1,\"r\")) (N (L,N (N (L,L,(2,\"c\")),L,(3,\"a\")),(1,\"b\")))) \n";;
+print_bracket_tree_full (sliv (Node (Leaf,Leaf,(-1,"r"))) (Node (Leaf,Node (Node (Leaf,Leaf,(2,"c")),Leaf,(3,"a")),(1,"b"))));;
+print_string "\n\n";;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let rec separate tr x =
+match tr with
+Node (tr1,tr2,(n,v)) -> if n = x then (Node (tr1,Leaf, (x,v)),tr2) else (if n < x then (let (tr21,tr22) = (separate tr2 x) in (Node (tr1,tr21,(n,v)),tr22)) 
+                                                                              else (let (tr11,tr12) = (separate tr1 x) in (tr11,Node (tr12,tr2,(n,v)))))
+|Leaf -> (Leaf,Leaf);;
+
+print_string "separate (N (L,N (N (L,L,(2,\"c\")),L,(3,\"a\")),(1,\"b\")))) \n";;
+let (tr1,tr2) = separate  (Node (Leaf,Node (Node (Leaf,Leaf,(2,"c")),Leaf,(3,"a")),(1,"b"))) 2;;
+print_bracket_tree_full tr1;;
+print_string "\n";;
+print_bracket_tree_full tr2;;
