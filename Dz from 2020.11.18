@@ -48,17 +48,24 @@ match tri with
 Node (tr1,tr2,x) -> (1 + (size tr1) + (size tr2))
 |Leaf -> 0;;
 
-let rec verity tri =
-match tri with
-Leaf -> (0,0)
-|Node (tr1,tr2,a) -> let (min1,max1) = verity tr1 in 
-                     let (min2,max2) = verity tr2 in ((if min1 < min2 then min1 else min2) + 1,(if max1 > max2 then max1 else max2) + 1);;
+let rec verity tri=
+let rec sup_f tr =
+match tr with
+Node (Leaf,Leaf, a) -> (a,a,true)
+|Node (Leaf,tr2, a) -> let (m1,m2,p) = sup_f tr2 in (a,m2,(a <= m1) && p)
+|Node (tr1,Leaf, a) -> let (m1,m2,p) = sup_f tr1 in (m1,a,(m2 <= a) && p)
+|Node (tr1, tr2, a) -> let (min1,max1,p1) = sup_f tr1 in
+                       let (min2,max2,p2) = sup_f tr2 in
+                       (min1,max2,((max1 <= a) && (a <= min2) && p1 && p2)) 
+|Leaf -> (0,0,true) in
+
+let (_,_,p) = sup_f tri in p;;
 
 
-(let (m1,m2) = verity (Node (Leaf,Node (Node (Leaf,Leaf,2),(Node (Leaf,Leaf,4)),3),1)) in
-print_string"verity (N (L,N (N (L,L,2),(N (L,L,4)),3),1)) is \n";
-print_string("min depth is "^(string_of_int m1)^"  \nmax depth is "^(string_of_int m2)^"");
-print_string"\n");;
+
+
+print_string"verity N (N (L,N (L,L,2),3),N (L,L,5),4) is \n";;
+if (verity (Node (Node (Leaf,Node (Leaf,Leaf,2),3),Node (Leaf,Leaf,5),4))) then (print_string"YES \n\n") else (print_string"NO \n\n");;
 
 
 
