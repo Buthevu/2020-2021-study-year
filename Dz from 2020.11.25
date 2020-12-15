@@ -1,0 +1,99 @@
+type 'a tree = Node of ('a tree) * ('a tree) * 'a|Leaf;;
+
+let print_bracket_tree_full tri =
+let rec sup_f tr s =
+match tr with
+Node (tr1,tr2,a)-> print_string ("* "^(string_of_int a)^"\n");print_string(s^"\\-->");sup_f tr1 (s^"|   ");print_string(s^"\\-->");sup_f tr2 (s^"    ")
+|Leaf -> print_string"\n" in
+sup_f tri "";;
+
+let rec is_bamboo tri =
+match tri with
+Leaf -> true
+|Node (Leaf, tr,_) -> is_bamboo tr
+|Node (tr ,Leaf,_) -> is_bamboo tr
+|_-> false;;
+
+print_string"is_bamboo N(L,N (L,N (L,L,3),2),1) is \n";;
+if (is_bamboo (Node (Leaf,Node (Leaf,Node (Leaf,Leaf,3),2),1))) then print_string"YES\n\n" else print_string"NO\n\n";;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let rec min_max_depth tri =
+match tri with
+Leaf -> (0,0)
+|Node (tr1, tr2,_) -> let (min1,max1) = min_max_depth tr1 in let (min2,max2) = min_max_depth tr2 in (1 + (if min1 < min2 then min1 else min2),1 + (if max1 < max2 then max2 else max1));;
+
+(let (mint,maxt) = min_max_depth (Node(Node(Leaf,Leaf,-1),Node (Leaf,Node (Leaf,Leaf,3),2),1)) in
+print_string "min_max_depth N(N(L,L,-1),N (L,N (L,L,3),2),1) is \n";
+print_string "min = ";
+print_int mint;
+print_string "\nmax = ";
+print_int maxt);;
+
+print_string"\nPress enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let is_balanced tri = 
+let (tmin,tmax) = (min_max_depth tri) in
+((tmax - tmin) <= 1);;
+
+print_string"is_balanced N(N(L,L,-1),N (L,N (L,L,3),2),1) is \n";;
+if (is_balanced (Node(Node(Leaf,Leaf,-1),Node (Leaf,Node (Leaf,Leaf,3),2),1))) then print_string"YES\n\n" else print_string"NO\n\n";;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let build_bamboo n=
+let rec sup_f i j =
+if i = n then Leaf
+else (Node (Leaf,sup_f (i+1) (j+1),j)) in
+sup_f 0 0;;
+
+print_string"build_bamboo 4\n";;
+print_bracket_tree_full (build_bamboo 4);;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let rec map_tree f tri =
+match tri with
+Node (tr1,tr2,a) -> Node (map_tree f tr1,map_tree f tr2, f a)
+|Leaf -> Leaf;;
+
+let rec force_2 n = (int_of_float (2.**(float_of_int n)));;
+
+let rec build_balanced_tree n=
+if n = 0 then Leaf
+else Node (map_tree (fun x-> x - (force_2 (n-2))) (build_balanced_tree (n-1)),map_tree (fun x-> x + (force_2 (n-2))) (build_balanced_tree (n-1)),0);;
+
+print_string"build_balanced_tree 4\n";;
+print_bracket_tree_full (build_balanced_tree 4);;
+
+print_string"Press enter...\n";;
+let _ = read_line ();;
+print_string"\n";;
+
+let rec grow tr l =
+match tr with
+|Node (Leaf,Leaf,n) -> (match l with
+                        a::b -> (Node (Leaf,(grow (map_tree (fun x -> x + n + 1 + (force_2 (a - 2))) (build_balanced_tree a)) (List.map (fun x -> x - a) b)),n))
+                       |[]->tr)
+|Node (tr1,tr2,n) -> (Node (tr1,(grow tr2 l),n))
+|Leaf -> (match l with
+          a::b-> (grow (build_balanced_tree a) (List.map (fun x -> x - a) b))
+         |[]->Leaf );;
+
+
+print_string"\ntree with min_depth = 2 and max_depth = 4\n";;
+print_bracket_tree_full (grow Leaf [2;4]);;
+
+
+print_string"\ngrow Leaf [2;4;6](from list of depth build tree)\n";;
+print_bracket_tree_full (grow Leaf [2;4;6]);;
+
