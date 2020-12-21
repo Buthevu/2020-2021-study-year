@@ -1,0 +1,35 @@
+let number_of_members = read_int();;
+
+let rec read_member s=
+let rec sup_f i n =
+if (String.length s) = (i+1) then [] else (if s.[i] = ' ' then (n::(sup_f (i+1) 0)) else (sup_f (i+1) (n*10 + (int_of_string (String.make 1 (s.[i])))))) in
+sup_f 0 0;;
+
+let rec read_tree i=
+if i = (number_of_members + 1) then []
+else ((number_of_members - i + 1,read_member (read_line()),0)::(read_tree (i+1)));;
+      
+
+let turn_over l= 
+let rec sup_f l1 l2=
+match (l1,l2) with
+(a::b,c)->sup_f b (a::c)
+|([],c) -> c in
+sup_f l [];;
+
+let tree = Array.of_list (turn_over (read_tree 1));;
+
+let rec main_func n=
+let (m,l,k) = tree.(n - 1) in
+tree.(n - 1) <- (m,l,k+1);
+List.iter (fun x-> main_func x) l;;
+
+Array.iter (fun (x,_,_)-> main_func x) tree;;
+      
+Array.sort (fun (i1,l1,k1) (i2,l2,k2) -> k1 - k2) tree;;
+      
+                 
+Array.iter (fun (i,l,k) -> print_int i; print_string" ") tree;; 
+
+ 
+
