@@ -1,0 +1,38 @@
+type 'a tree = Leaf| Node of  'a tree * 'a tree * 'a;;
+
+let rec left_key tri=
+match tri with
+Node (tr1,tr2,(k,_)) -> if tr1 = Leaf then k else (left_key tr1) ;;
+
+let rec right_key tri=
+match tri with
+Node (tr1,tr2,(k,_)) -> if tr2 = Leaf then k else (right_key tr2) ;;
+
+let rec sum tri =
+match tri with
+Node (tr1,tr2,(_,v)) -> ((sum tr1) + v + (sum tr2)) 
+|Leaf -> 0;;
+
+let rec from_tree_to_segment_tree tri=
+match tri with
+Node (tr1,tr2,(k,v))->  Node ((from_tree_to_segment_tree tr1),(from_tree_to_segment_tree tr2),((left_key tri),sum tr1,k,v,(right_key tri),sum tr2))
+
+|Leaf -> Leaf;;
+
+let rec count_sum tri a b=
+match tri with
+Node (tr1,tr2,(k1,s1,k,v,k2,s2)) -> if k1 >= a && k2 <= b then (s1 + v + s2)
+                              else (if b < k then (count_sum tr1 a b) 
+                                             else (if a > k then (count_sum tr2 a b) 
+                                                            else (if a = k then ( if b = k2 then (v + s2) else (v + (count_sum tr2 a b))) 
+                                                                           else (if b = k then ((count_sum tr1 a b) + v) else ((count_sum tr1 a b) + v + (count_sum tr2 a b))))))
+
+|Leaf -> 0;;
+
+let tri = Node (Node (Leaf,Leaf,(1,5)),Node (Leaf,Leaf,(3,10)),(2,7));;
+
+let new_tri = from_tree_to_segment_tree tri;;
+
+print_string"N(N(L,L(1,5)),N(L,L,(3,10)),(2,7)) sum from 1 to 2 using segment tree is: \n";;
+
+print_int (count_sum new_tri 1 2);;
