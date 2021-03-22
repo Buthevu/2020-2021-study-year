@@ -1,0 +1,645 @@
+/******************************************************************************
+
+                              Online C++ Compiler.
+               Code, Compile, Run and Debug C++ program online.
+Write your code in this editor and press "Run" button to compile and execute it.
+
+*******************************************************************************/
+
+#include <iostream>
+#include <list>
+
+#define assert(x) if (!(x)) { fprintf(stderr, "Assertion failed: %s", #x); exit(1); }
+
+using namespace std;
+
+string s;
+int i = 0;
+int size;
+list<int> oldlist;
+list<int> newlist;
+
+void error(char* s) {
+    fprintf(stderr, "Runtime error: %s", s);
+    exit(1);
+}
+
+string intToString(int i)
+{
+    if (i == 0)
+    {
+        return "0";
+    }
+    else
+    {
+        return (intToString(i / 10) + string(1, char(i + int('0'))));
+    }
+}
+
+
+string listToString(list<int> l)
+{
+    string s = "[";
+    for (auto iter = l.begin(); iter != l.end(); iter++)
+    {
+        s = s + ";" + intToString(*iter);
+    }
+    return (s + "]");
+}
+
+
+enum class KindCharSet {
+    CharSetConcat, CharSetChar, CharSetRange
+};
+
+struct CharSet {
+    KindCharSet kind;
+    CharSet* left;
+    CharSet* right;
+    char c1;
+    char c2;
+    CharSet(CharSet* cs1, CharSet* cs2) :
+        kind(KindCharSet::CharSetConcat), left(cs1), right(cs2), c1('#'), c2('#') {}
+    CharSet(char c) :
+        kind(KindCharSet::CharSetChar), left(NULL), right(NULL), c1(c), c2('#') {}
+    CharSet(char start, char end) :
+        kind(KindCharSet::CharSetRange), right(NULL), left(NULL), c1(start), c2(end) {}
+    CharSet* getLeft() {
+        assert((kind == KindCharSet::CharSetConcat));
+        return left;
+    }
+    CharSet* getRight() {
+        assert(kind == (KindCharSet::CharSetConcat));
+        return right;
+    }
+    char getChar() {
+        assert(kind == KindCharSet::CharSetChar);
+        return c1;
+    }
+    char getLeftChar() {
+        assert(kind == KindCharSet::CharSetRange);
+        return c1;
+    }
+    char getRightChar() {
+        assert(kind == KindCharSet::CharSetRange);
+        return c2;
+    }
+    KindCharSet getKind() {
+        return kind;
+    }
+};
+
+CharSet* charSetParse()
+{
+    if (s[i + 1] == ']')
+    {
+        char c = s[i];
+        i++;
+        i++;
+        return new CharSet(c);
+    }
+    else if (s[i + 1] == '-')
+    {
+        if (s[i + 3] == ']')
+        {
+            char c1 = s[i];
+            char c2 = s[i + 2];
+            i = i + 4;
+            return new CharSet(c1, c2);
+        }
+        else
+        {
+            char c1 = s[i];
+            char c2 = s[i + 2];
+            i = i + 3;
+            return new CharSet(new CharSet(c1, c2), charSetParse());
+        }
+    }
+    else
+    {
+        char c = s[i];
+        i++;
+        return (new CharSet(new CharSet(c), charSetParse()));
+    }
+}
+
+string charSetToString(CharSet c)
+{
+    if (c.getKind() == KindCharSet::CharSetChar)
+    {
+        return(string(1, c.getChar()));
+    }
+    else if (c.getKind() == KindCharSet::CharSetRange)
+    {
+        return (string(1, c.getLeftChar()) + "-" + c.getRightChar());
+    }
+    else if (c.getKind() == KindCharSet::CharSetConcat)
+    {
+        return ((charSetToString(*(c.getLeft()))) + (charSetToString(*(c.getRight()))));
+    }
+    else
+    {
+        cout << "Something went wrong in charSetToString.";
+        exit(1);
+    }
+}
+
+enum class KindRegularExpression {
+    RegularExpressionConcat, RegularExpressionCharSet, RegularExpressionChar, RegularExpressionPlus, RegularExpressionMul, RegularExpressionAlt
+};
+
+struct RegularExpression {
+    KindRegularExpression kind;
+    RegularExpression* left;
+    RegularExpression* right;
+    CharSet* cs;
+    char c;
+    RegularExpression(RegularExpression* re1, RegularExpression* re2) :
+        kind(KindRegularExpression::RegularExpressionConcat), left(re1), right(re2), cs(NULL), c('#') {};
+    RegularExpression(CharSet* s) :
+        kind(KindRegularExpression::RegularExpressionCharSet), left(NULL), right(NULL), cs(s), c('#') {};
+    RegularExpression(char k) :
+        kind(KindRegularExpression::RegularExpressionChar), left(NULL), right(NULL), cs(NULL), c(k) {};
+    RegularExpression(RegularExpression* re, bool p) :
+        left(re), right(NULL), cs(NULL), c('#') {
+        if (p)
+        {
+            kind = (KindRegularExpression::RegularExpressionPlus);
+        }
+        else
+        {
+            kind = (KindRegularExpression::RegularExpressionMul);
+        }
+    };
+    RegularExpression(RegularExpression* re1, RegularExpression* re2, char p) :
+        kind(KindRegularExpression::RegularExpressionAlt), left(re1), right(re2), cs(NULL), c('#') {};
+    KindRegularExpression getKind() {
+        return(kind);
+    };
+    RegularExpression* getLeft() {
+        return(left);
+    };
+    RegularExpression* getRight() {
+        return(right);
+    };
+    CharSet* getCharSet() {
+        return(cs);
+    };
+    RegularExpression* getRegularExpression() {
+        return(left);
+    };
+    char getChar() {
+        return(c);
+    };
+};
+
+RegularExpression* parseRegularExpression() {
+    if (s[i] == '(')
+    {
+        i++;
+        RegularExpression* re = parseRegularExpression();
+        i++;
+        if (i == s.length())
+        {
+            return re;
+        }
+        else if (s[i] == ')')
+        {
+            return re;
+        }
+        else
+        {
+            if ((s[i] == '+') || (s[i] == '*'))
+            {
+                char c = s[i];
+                i++;
+                if (i == s.length())
+                {
+                    return new RegularExpression(re, c == '+');
+                }
+                else if (s[i] == ')')
+                {
+                    return new RegularExpression(re, c == '+');
+                }
+                else
+                {
+                    if (s[i] == '|')
+                    {
+                        i++;
+                        return new RegularExpression(new RegularExpression(re, c == '+'), parseRegularExpression(), '|');
+                    }
+                    else
+                    {
+                        return new RegularExpression(new RegularExpression(re, c == '+'), parseRegularExpression());
+                    }
+                }
+            }
+            else
+            {
+                if (s[i] == '|')
+                {
+                    i++;
+                    return new RegularExpression(re, parseRegularExpression(), '|');
+                }
+                else
+                {
+                    return new RegularExpression(re, parseRegularExpression());
+                }
+            }
+        }
+    }
+    else if (s[i] == '[')
+    {
+        i++;
+        RegularExpression* re = new RegularExpression(charSetParse());
+        if (i == s.length())
+        {
+            return re;
+        }
+        else if (s[i] == ')')
+        {
+            return re;
+        }
+        else if (s[i] == '|')
+        {
+            i++;
+            return new RegularExpression(re, parseRegularExpression(), '|');
+        }
+        else if ((s[i] == '+') || (s[i] == '*'))
+        {
+            char c = s[i];
+            i++;
+            if (i == s.length())
+            {
+                return new RegularExpression(re, c == '+');
+            }
+            else if (s[i] == ')')
+            {
+                return new RegularExpression(re, c == '+');
+            }
+            else if (s[i] == '|')
+            {
+                i++;
+                return new RegularExpression(new RegularExpression(re, c == '+'), parseRegularExpression(), '|');
+            }
+            else
+            {
+                return new RegularExpression(new RegularExpression(re, c == '+'), parseRegularExpression());
+            }
+        }
+        else
+        {
+            return new RegularExpression(re, parseRegularExpression());
+        }
+    }
+    else
+    {
+        char c = s[i];
+        i++;
+        if (i == s.length())
+        {
+            return new RegularExpression(c);
+        }
+        else if (s[i] == ')')
+        {
+            return new RegularExpression(c);
+        }
+        else if ((s[i] == '+') || (s[i] == '*'))
+        {
+            char nc = s[i];
+            i++;
+            if (i == s.length())
+            {
+                return new RegularExpression(new RegularExpression(c), nc == '+');
+            }
+            else if (s[i] == ')')
+            {
+                return new RegularExpression(new RegularExpression(c), nc == '+');
+            }
+            else if (s[i] == '|')
+            {
+                i++;
+                return new RegularExpression(new RegularExpression(new RegularExpression(c), nc == '+'), parseRegularExpression(), '|');
+            }
+            else
+            {
+                return new RegularExpression(new RegularExpression(new RegularExpression(c), nc == '+'), parseRegularExpression());
+            }
+
+        }
+        else if (s[i] == '|')
+        {
+            i++;
+            return new RegularExpression(new RegularExpression(c), parseRegularExpression(), '|');
+        }
+        else
+        {
+            return new RegularExpression(new RegularExpression(c), parseRegularExpression());
+        }
+    }
+};
+
+string regularExpressionToString(RegularExpression re)
+{
+    if (re.getKind() == KindRegularExpression::RegularExpressionConcat)
+    {
+        return (regularExpressionToString(*re.getLeft()) + regularExpressionToString(*re.getRight()));
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionChar)
+    {
+        return (string(1, re.getChar()));
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionCharSet)
+    {
+        return ("[" + charSetToString(*re.getCharSet()) + "]");
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionPlus)
+    {
+        return ("(" + (regularExpressionToString(*re.getLeft())) + ")+");
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionMul)
+    {
+        return ("(" + (regularExpressionToString(*re.getLeft())) + ")*");
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionAlt)
+    {
+        return ("(" + (regularExpressionToString(*re.getLeft())) + ")|(" + (regularExpressionToString(*re.getRight())) + ")");
+    }
+    else
+    {
+        cout << "Something went wrong in regularExpressionToString" << int(re.getKind());
+        exit(1);
+    }
+}
+
+RegularExpression* charSetToRegularExpression(CharSet cs)
+{
+    if (cs.getKind() == KindCharSet::CharSetConcat)
+    {
+        return new RegularExpression(charSetToRegularExpression(*(cs.getLeft())), charSetToRegularExpression(*(cs.getRight())),'|');
+    }
+    else if (cs.getKind() == KindCharSet::CharSetChar)
+    {
+        return new RegularExpression(cs.getChar());
+    }
+    else if (cs.getKind() == KindCharSet::CharSetRange)
+    {
+        if (cs.getLeftChar() == cs.getRightChar())
+        {
+            return new RegularExpression(cs.getLeftChar());
+        }
+        else
+        {
+            char c = cs.c1;
+            cs.c1 = char(int(c) + 1);
+            return new RegularExpression(new RegularExpression(c), charSetToRegularExpression(cs),'|');
+        }
+    }
+}
+
+void transform(RegularExpression* re)
+{
+    if ((*re).getKind() == KindRegularExpression::RegularExpressionChar)
+    {
+
+    }
+    else if ((*re).getKind() == KindRegularExpression::RegularExpressionConcat)
+    {
+        transform((*re).getLeft());
+        transform((*re).getRight());
+    }
+    else if ((*re).getKind() == KindRegularExpression::RegularExpressionMul)
+    {
+        transform((*re).getLeft());
+    }
+    else if ((*re).getKind() == KindRegularExpression::RegularExpressionPlus)
+    {
+        transform((*re).getLeft());
+    }
+    else if ((*re).getKind() == KindRegularExpression::RegularExpressionAlt)
+    {
+        transform((*re).getLeft());
+        transform((*re).getRight());
+    }
+    else if ((*re).getKind() == KindRegularExpression::RegularExpressionCharSet)
+    {
+        RegularExpression re1 = *charSetToRegularExpression(*(*re).getCharSet());
+        (*re).kind = re1.kind;
+        (*re).left = re1.left;
+        (*re).right = re1.right;
+        (*re).cs = re1.cs;
+        (*re).c = re1.c;
+    }
+}
+
+int sizeOfGraph(RegularExpression re)
+{
+    if (re.getKind() == KindRegularExpression::RegularExpressionChar)
+    {
+        return (1);
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionConcat)
+    {
+        return((sizeOfGraph(*re.getLeft())) + (sizeOfGraph(*re.getRight())));
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionMul)
+    {
+        return((sizeOfGraph(*re.getLeft())) + 1);
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionPlus)
+    {
+        return((sizeOfGraph(*re.getLeft())) + 1);
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionAlt)
+    {
+        return(sizeOfGraph(*re.getLeft()) + sizeOfGraph(*re.getRight()) + 2);
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionCharSet)
+    {
+        exit(1);
+    }
+}
+
+list<int>** arr;
+
+int buldGraph(int i, RegularExpression re)
+{
+    if (re.getKind() == KindRegularExpression::RegularExpressionChar)
+    {
+        arr[i][int(re.getChar())] = { i + 1 };
+        return (i + 1);
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionConcat)
+    {
+        int k = buldGraph(i, *re.getLeft());
+        int j = buldGraph(k, *re.getRight());
+        return j;
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionMul)
+    {
+        int k = buldGraph(i, *re.getLeft());
+        arr[i][256].push_back(k);
+        arr[k][256].push_back(i);
+        arr[k][256].push_back(k + 1);
+        return(k + 1);
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionPlus)
+    {
+        int k = buldGraph(i, *re.getLeft());
+        arr[k][256].push_back(i);
+        arr[k][256].push_back(k + 1);
+        return(k + 1);
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionAlt)
+    {
+        int k = buldGraph(i + 1, *re.getLeft());
+        int j = buldGraph(k + 1, *re.getRight());
+        arr[i][256] = { i + 1,k + 1 };
+        arr[k][256] = { j };
+        return(j);
+    }
+    else if (re.getKind() == KindRegularExpression::RegularExpressionCharSet)
+    {
+        exit(1);
+    }
+}
+
+bool check(list<int> l, int x)
+{
+    for (auto iter = l.begin(); iter != l.end(); iter++)
+    {
+        if (x == *iter)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void reduct(int op)
+{
+   //cout << "first reduct" << op << endl;
+    if (check((newlist), op))
+    {
+        //cout << "we have " << op << " --- " << listToString (newlist)<< endl << endl;
+    }
+    else
+    {
+        //cout << "reduct" << op << endl << endl;
+        (newlist).push_back(op);
+        for (auto iter = arr[op][256].begin(); iter != arr[op][256].end(); iter++)
+        {
+            reduct(*iter);
+        }
+    }
+}
+
+void reduct2(int i, int op)
+{
+    if (check((oldlist), op))
+    {
+    }
+    else
+    {
+        (oldlist).push_back(op);
+        for (auto iter = arr[op][256].begin(); iter != arr[op][256].end(); iter++)
+        {
+            reduct2(i, *iter);
+        }
+        for (auto iter = arr[op][s[i]].begin(); iter != arr[op][s[i]].end(); iter++)
+        {
+            reduct(*iter);
+        }
+    }
+}
+
+bool step(int i)
+{
+    /*cout << endl << endl;
+    cout << "oldlist :   ";
+    for (auto iter = oldlist.begin(); iter != oldlist.end(); iter++)
+    {
+        cout << *iter << "   ";
+    }*/
+    if (i == s.length())
+    {
+        if (check((oldlist), (::size - 1)))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        for (auto iter = (oldlist).begin(); iter != (oldlist).end(); iter++)
+        {
+            for (auto it = (arr[*iter][int(s[i])]).begin(); it != (arr[*iter][int(s[i])]).end(); it++)
+            {
+                /*cout << endl << "newlist :   ";
+                for (auto iter = newlist.begin(); iter != newlist.end(); iter++)
+                {
+                    cout << *iter << "   ";
+                }
+                cout << endl;*/
+                reduct(*it);
+            }
+            for (auto it = (arr[*iter][256]).begin(); it != (arr[*iter][256]).end(); it++)
+            {
+                reduct2(i,*it);
+            }
+        }
+        while (!oldlist.empty())
+        {
+            oldlist.pop_front();
+        }
+        while (!newlist.empty())
+        {
+            oldlist.push_back(newlist.front());
+            newlist.pop_front();
+        }
+        return step(i + 1);
+    }
+}
+
+int main()
+{
+    cout << "Enter regular expression: ";
+    cin >> s;
+    RegularExpression* re = (parseRegularExpression());
+    transform(re);
+    ::size = sizeOfGraph(*re) + 1;
+    arr = new list<int>*[::size];
+    for (int i = 0; i < ::size; i++)
+    {
+        arr[i] = new list<int>[257];
+    }
+    buldGraph(0,*re);
+    /*cout << ::size << endl << endl;
+    for (int i = 0; i < 256; i++)
+    {
+        if ((arr[0][i].empty()) && (arr[1][i].empty()) && (arr[2][i].empty()) && (arr[3][i].empty()) && (arr[4][i].empty()))
+        {
+        }
+        else
+        {
+            cout << char(i) << "  ---  " << listToString(arr[0][i]) << " | " << listToString(arr[1][i]) << " | " << listToString(arr[2][i]) << " | " << listToString(arr[3][i]) << " | " << listToString(arr[4][i]) << endl;
+        }
+    }
+    cout << "&&" << "  ---  " << listToString(arr[0][256]) << " | " << listToString(arr[1][256]) << " | " << listToString(arr[2][256]) << listToString(arr[3][256]) << " | " << listToString(arr[4][256]) << endl;*/
+    oldlist.push_back(0);
+    cout << "Enter line: ";
+    cin >> s;
+    cout << "Does the redular expression  match to the line: ";
+    if (step (0))
+    {
+        cout << "Yes" << endl;
+    }
+    else
+    {
+        cout << "No" << endl;
+    }
+    return 0;
+}
