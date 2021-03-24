@@ -1,0 +1,97 @@
+#include<iostream>
+#include<string>
+#include<fstream>
+/****************************************************
+Exemple of inputFile:
+<html>
+<body>
+<h>Head
+<\h>
+<p>Part 1
+<\p>
+<p>Part 2
+<\p>
+<\body>
+<\html>
+*****************************************************/
+using namespace std;
+
+int main()
+{
+	//setlocale(LC_ALL,"ru");
+
+	ofstream fout;
+	fout.open("outputFile.txt");
+
+	ifstream fin;
+	fin.open("inputFile.txt");
+
+	if (!fin.is_open())
+	{
+		cout << "Something went wrong\n";
+	}
+	if (!fout.is_open())
+	{
+		cout << "Something went wrong";
+	}
+	char ch;
+	while (fin.get(ch))
+	{
+		if (ch == '<')
+		{
+			fin.get(ch);
+			if (ch == 'h')
+			{
+				fin.get(ch);
+				if (ch == '>')
+				{
+					int num = 0;
+					fin.get(ch);
+					while (ch != '<')
+					{
+						if (ch != '\n')
+						{
+							num++;
+							fout << ch;
+						}
+						fin.get(ch);
+					}
+					fout << '\n';
+					while (num != 0)
+					{
+						fout << '-';
+						num--;
+					}
+					fin.get(ch);
+					fin.get(ch);
+					fin.get(ch);
+					fout << '\n';
+					fout << '\n';
+				}
+			}
+			else if (ch == 'p')
+			{
+				fin.get(ch);
+				fin.get(ch);
+				while (ch != '<')
+				{
+					if (ch != '\n')
+					{
+						fout << ch;
+					}
+					fin.get(ch);
+				}
+				fout << "\n\n";
+				fin.get(ch);
+				fin.get(ch);
+				fin.get(ch);
+			}
+			else
+			{
+
+			}
+		}
+	}
+	fin.close();
+	fout.close();
+}
