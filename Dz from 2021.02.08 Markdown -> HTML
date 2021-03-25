@@ -1,0 +1,70 @@
+#include<iostream>
+#include<string>
+#include<fstream>
+
+
+/*****************************************************
+Exemple of input file:
+Head
+----
+
+Part 1
+
+Part 2
+
+
+******************************************************/
+
+using namespace std;
+
+int main()
+{
+	//setlocale(LC_ALL,"ru");
+
+	ofstream fout;
+	fout.open("outputFile.txt");
+
+	ifstream fin;
+	fin.open("inputFile.txt");
+
+	if (!fin.is_open())
+	{
+		cout << "Something went wrong 1\n";
+	}
+	if (!fout.is_open())
+	{
+		cout << "Something went wrong 2";
+	}
+	fout << "<html>\n";
+	fout << "<body>\n";
+	while (!fin.eof())
+	{
+		string s;
+		getline(fin,s);
+		string s2;
+		getline(fin, s2); 
+		if (s2 == "")
+		{
+			if (s == "")
+			{
+				continue;
+			}
+			fout << "<p>\n";
+			fout << s;
+			fout << "\n";
+			fout << "<\\p>\n";
+		}
+		else
+		{
+			fout << "<h>\n";
+			fout << s;
+			fout << "\n";
+			fout << "<\\h>\n";
+			getline(fin, s);
+		}
+	}
+	fout << "<\\body>\n";
+	fout << "<\\html>\n";
+	fin.close();
+	fout.close();
+}
