@@ -1,0 +1,35 @@
+open Graphics;;
+open_graph"500x200";;
+
+let l = [(8.0,100.,100.); (8.0,200.,100.)];;
+
+let pi = 3.1415926535;;
+
+
+let rec count_small (x,y) n=
+if (n = 0) then ()
+else
+(moveto (int_of_float(x)) (int_of_float(y));
+let rec sup_f lis c d=
+match lis with
+(q,x1,y1)::b-> let len = sqrt((x1-.x)**2. +. (y1-.y)**2.) in
+               let x2 = 20. *. q *. (x1 -. x) /. (len  ** 3.) in
+               let y2 = 20. *. q *. (y1 -. y) /. (len  ** 3.) in
+               sup_f b (c +. x2) (d +. y2)
+
+|[] -> lineto (int_of_float(x +. c)) (int_of_float(y +. c));
+       count_small (x +. c,y +. d) (n-1) in
+sup_f l 0. 0.)
+
+
+let count_big (q,x,y) n =
+let rec sup_f i=
+if (i = 0) then () else (moveto (int_of_float(x)) (int_of_float(y));
+                         count_small (x +. 20.0 *. cos(2. *. float_of_int(i) *. pi /. float_of_int(n)), y +. 20.0 *. sin (2. *. float_of_int(i) *. pi /. float_of_int(n))) 20000;
+                         sup_f (i-1)) in
+sup_f n;;
+
+
+
+List.iter (fun x -> count_big x 33) l;;
+read_key();;
